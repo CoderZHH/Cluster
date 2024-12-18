@@ -51,7 +51,7 @@ def validate_params(algorithm, params):
     """验证算法参数"""
     base_params = {
         'n_clusters': lambda x: isinstance(x, int) and 2 <= x <= 10,
-        'max_iter': lambda x: isinstance(x, int) and 50 <= x <= 1000,
+        'max_iter': lambda x: isinstance(x, int) and 50 <= x <= 5000,
         'random_state': lambda x: isinstance(x, int)
     }
     

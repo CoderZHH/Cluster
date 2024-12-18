@@ -20,7 +20,11 @@ import {
   TableRow,
   Paper,
   TextField,
-  Grid2
+  Select,
+  MenuItem,
+  InputLabel,
+  Checkbox,
+  ListItemText
 } from '@mui/material';
 import { styled } from '@mui/system';
 import * as d3 from 'd3';
@@ -41,8 +45,8 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploadedDescription, setUploadedDescription] = useState('');
   const [originalData, setOriginalData] = useState(null);
+  const [selectedColumns, setSelectedColumns] = useState([]);
   const [startRow, setStartRow] = useState(0);
-  const [startCol, setStartCol] = useState(0);
 
   const datasets = [
     {
@@ -86,6 +90,7 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
           setUploadedFileName(file.name);
           setUploadedDescription(`包含${data.length}个样本，${Object.keys(data[0]).length}个特征的数据集`);
           setSelectedDataset('uploaded');
+          setSelectedColumns(Object.keys(data[0]));
         } catch (error) {
           console.error('文件解析错误:', error);
           alert('文件解析错误，请检查文件格式');
@@ -112,11 +117,11 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
   const handleConfirm = () => {
     if (originalData) {
       const filteredData = originalData.slice(startRow).map(row => {
-        const keys = Object.keys(row).slice(startCol);
-        return keys.reduce((acc, key) => {
-          acc[key] = row[key];
-          return acc;
-        }, {});
+        const filteredRow = {};
+        selectedColumns.forEach(col => {
+          filteredRow[col] = row[col];
+        });
+        return filteredRow;
       });
       setUploadedData(filteredData);
       setOpenPreview(false);
@@ -194,30 +199,33 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
         <DialogTitle>数据预览</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            提示：选择起始行和列来筛选数据。蓝色区域表示将被保留的数据。
+            选择需要聚类的列：
           </Typography>
-          <Grid2 container spacing={2} sx={{ mb: 2 }}>
-            <Grid2 item xs={6}>
-              <TextField
-                fullWidth
-                label="起始行"
-                type="number"
-                value={startRow + 1}
-                onChange={(e) => setStartRow(Math.max(0, Number(e.target.value) - 1))}  // 减1存储
-                InputProps={{ inputProps: { min: 1 } }}
-              />
-            </Grid2>
-            <Grid2 item xs={6}>
-              <TextField
-                fullWidth
-                label="起始列"
-                type="number"
-                value={startCol + 1}
-                onChange={(e) => setStartCol(Math.max(0, Number(e.target.value) - 1))}  // 减1存储               
-                InputProps={{ inputProps: { min: 1 } }}
-              />
-            </Grid2>
-          </Grid2>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>选择列</InputLabel>
+            <Select
+              multiple
+              value={selectedColumns}
+              onChange={(e) => setSelectedColumns(e.target.value)}
+              renderValue={(selected) => selected.join(', ')}
+            >
+              {originalData && Object.keys(originalData[0]).map((col) => (
+                <MenuItem key={col} value={col}>
+                  <Checkbox checked={selectedColumns.indexOf(col) > -1} />
+                  <ListItemText primary={col} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label="起始行"
+            type="number"
+            value={startRow + 1}
+            onChange={(e) => setStartRow(Math.max(0, Number(e.target.value) - 1))}
+            InputProps={{ inputProps: { min: 1 } }}
+            sx={{ mb: 2 }}
+          />
           <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
             <Table stickyHeader>
               <TableHead>
@@ -226,8 +234,8 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
                     <TableCell
                       key={index}
                       sx={{
-                        backgroundColor: index >= startCol ? '#e3f2fd' : '#f5f5f5',
-                        fontWeight: index >= startCol ? 'bold' : 'normal'
+                        backgroundColor: selectedColumns.includes(key) ? '#e3f2fd' : '#f5f5f5',
+                        fontWeight: selectedColumns.includes(key) ? 'bold' : 'normal'
                       }}
                     >
                       {key}
@@ -238,19 +246,19 @@ const DatasetPanel = ({ selectedDataset, setUploadedData, uploadedData, setSelec
               <TableBody>
                 {originalData && originalData.slice(0, 10).map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
-                    {Object.values(row).map((value, cellIndex) => (
+                    {Object.keys(row).map((key, cellIndex) => (
                       <TableCell
                         key={cellIndex}
                         sx={{
-                          backgroundColor: rowIndex >= startRow && cellIndex >= startCol
+                          backgroundColor: rowIndex >= startRow && selectedColumns.includes(key)
                             ? 'rgba(25, 118, 210, 0.08)'
                             : 'inherit',
-                          opacity: rowIndex >= startRow && cellIndex >= startCol
+                          opacity: rowIndex >= startRow && selectedColumns.includes(key)
                             ? 1
                             : 0.5
                         }}
                       >
-                        {value}
+                        {row[key]}
                       </TableCell>
                     ))}
                   </TableRow>
