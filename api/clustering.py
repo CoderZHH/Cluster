@@ -83,7 +83,7 @@ def cluster_data():
             
         data = request.json
         dataset_name = data.get('dataset')
-        uploaded_data = data.get('uploadedData')  # 获取上传的数据
+        uploaded_data = data.get('uploadedData')
 
         algorithm = data.get('algorithm', 'kmeans')
         params = data.get('params', {})

@@ -21,7 +21,7 @@ const ClusteringTutorial = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       <Typography variant="h4" gutterBottom align="center">
-        聚类算法可视化教程
+        聚类算法可视化
       </Typography>
 
       <Grid container spacing={3}>
